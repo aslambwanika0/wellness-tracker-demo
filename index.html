@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wellness Tracker — Demo</title>
+  <style>
+    /* ── Custom properties ─────────────────────────────────────── */
+    :root {
+      --color-bg:        #ffffff;
+      --color-surface:   #f7f8fa;
+      --color-border:    #e5e7eb;
+      --color-text:      #1f2328;
+      --color-muted:     #57606a;
+      --color-accent:    #3b82d4;
+      --color-danger:    #c0392b;
+      --color-error-bg:  #fff0f0;
+      --color-banner-bg: #fefce8;
+      --color-banner-bd: #fde68a;
+      --radius:          8px;
+      --space-xs:        4px;
+      --space-sm:        8px;
+      --space-md:        16px;
+      --space-lg:        24px;
+      --space-xl:        32px;
+    }
+
+    /* ── Reset ─────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+      font-size: 15px;
+      line-height: 1.6;
+      color: var(--color-text);
+      background: var(--color-bg);
+    }
+    a { color: var(--color-accent); }
+
+    /* ── Layout ────────────────────────────────────────────────── */
+    .page-wrap {
+      max-width: 560px;
+      margin: 0 auto;
+      padding: 0 var(--space-md) var(--space-xl);
+    }
+
+    /* ── Banner ────────────────────────────────────────────────── */
+    #banner {
+      background: var(--color-banner-bg);
+      border-bottom: 1px solid var(--color-banner-bd);
+      padding: var(--space-sm) var(--space-md);
+      font-size: 13px;
+      color: #78350f;
+      text-align: center;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    #banner strong { font-weight: 600; }
+
+    /* ── Page heading ──────────────────────────────────────────── */
+    .page-title {
+      margin: var(--space-lg) 0 var(--space-xs);
+      font-size: 22px;
+      font-weight: 700;
+    }
+    .page-subtitle {
+      font-size: 13px;
+      color: var(--color-muted);
+      margin-bottom: var(--space-lg);
+    }
+
+    /* ── Card ──────────────────────────────────────────────────── */
+    .card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      padding: var(--space-lg);
+      margin-bottom: var(--space-lg);
+    }
+    .card-title {
+      font-size: 14px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--color-muted);
+      margin-bottom: var(--space-md);
+    }
+
+    /* ── Form ──────────────────────────────────────────────────── */
+    .field { margin-bottom: var(--space-md); }
+    .field label {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: var(--space-xs);
+    }
+    .field input,
+    .field select {
+      width: 100%;
+      padding: var(--space-sm) var(--space-md);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      font-size: 15px;
+      background: var(--color-bg);
+      color: var(--color-text);
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .field input:focus,
+    .field select:focus {
+      border-color: var(--color-accent);
+      box-shadow: 0 0 0 3px rgba(59,130,212,0.15);
+    }
+    .field input[aria-invalid="true"],
+    .field select[aria-invalid="true"] {
+      border-color: var(--color-danger);
+      background: var(--color-error-bg);
+    }
+    .field-error {
+      font-size: 13px;
+      color: var(--color-danger);
+      margin-top: var(--space-xs);
+      display: none;
+    }
+    .field-error.visible { display: block; }
+    .field-hint {
+      font-size: 12px;
+      color: var(--color-muted);
+      margin-top: var(--space-xs);
+    }
+
+    /* ── Buttons ───────────────────────────────────────────────── */
+    .btn-row {
+      display: flex;
+      gap: var(--space-sm);
+      flex-wrap: wrap;
+      margin-top: var(--space-md);
+    }
+    .btn {
+      padding: var(--space-sm) var(--space-md);
+      border-radius: var(--radius);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: opacity 0.15s;
+    }
+    .btn:focus { outline: 3px solid var(--color-accent); outline-offset: 2px; }
+    .btn:hover { opacity: 0.85; }
+    .btn-primary { background: var(--color-accent); color: #fff; }
+    .btn-secondary { background: var(--color-bg); color: var(--color-text); border-color: var(--color-border); }
+    .btn-danger { background: var(--color-danger); color: #fff; font-size: 13px; padding: 4px 10px; }
+
+    /* ── Summary card ──────────────────────────────────────────── */
+    .summary-grid {
+      display: flex;
+      gap: var(--space-sm);
+      flex-wrap: wrap;
+    }
+    .summary-stat {
+      flex: 1 1 calc(50% - var(--space-sm)); /* 2-col on narrow, 4-col when wide */
+      min-width: 100px;
+      background: var(--color-bg);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      padding: var(--space-md) var(--space-sm);
+      text-align: center;
+    }
+    .summary-stat .stat-value {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--color-accent);
+    }
+    .summary-stat .stat-label {
+      font-size: 11px;
+      color: var(--color-muted);
+      margin-top: 2px;
+      line-height: 1.3;
+    }
+    .summary-empty {
+      font-size: 14px;
+      color: var(--color-muted);
+      padding: var(--space-md) 0 var(--space-xs);
+    }
+    .summary-footer {
+      font-size: 12px;
+      color: var(--color-muted);
+      margin-top: var(--space-md);
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: var(--space-xs);
+    }
+    .summary-disclaimer {
+      font-style: italic;
+    }
+
+    /* ── Log list ──────────────────────────────────────────────── */
+    #log-empty {
+      font-size: 14px;
+      color: var(--color-muted);
+      text-align: center;
+      padding: var(--space-lg) 0;
+    }
+    .entry-row {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      padding: var(--space-sm) 0;
+      border-bottom: 1px solid var(--color-border);
+      font-size: 14px;
+      flex-wrap: wrap;
+    }
+    .entry-row:last-child { border-bottom: none; }
+    .entry-date { font-weight: 600; min-width: 90px; }
+    .entry-chips {
+      display: flex;
+      gap: var(--space-xs);
+      flex: 1;
+      flex-wrap: wrap;
+    }
+    .chip {
+      background: var(--color-bg);
+      border: 1px solid var(--color-border);
+      border-radius: 99px;
+      padding: 2px 10px;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+    .entry-actions { display: flex; gap: var(--space-xs); margin-left: auto; }
+    .btn-edit {
+      font-size: 13px;
+      padding: 4px 10px;
+      background: var(--color-bg);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      cursor: pointer;
+      color: var(--color-text);
+    }
+    .btn-edit:hover { border-color: var(--color-accent); color: var(--color-accent); }
+    .btn-edit:focus { outline: 3px solid var(--color-accent); outline-offset: 2px; }
+
+    /* ── Edit-mode state ───────────────────────────────────────── */
+    #edit-controls { display: none; }
+    #save-controls { display: flex; }
+    body.edit-mode #edit-controls { display: flex; }
+    body.edit-mode #save-controls { display: none; }
+    .edit-mode-notice {
+      font-size: 13px;
+      color: var(--color-accent);
+      font-weight: 500;
+      margin-bottom: var(--space-sm);
+      display: none;
+    }
+    body.edit-mode .edit-mode-notice { display: block; }
+  </style>
+</head>
+<body>
+
+  <!-- ── Banner ──────────────────────────────────────────────── -->
+  <div id="banner" role="note">
+    <strong>⚠ Demo only — use fictional data.</strong>
+    Not for clinical use. No real patient or health data should be entered.
+  </div>
+
+  <div class="page-wrap">
+    <h1 class="page-title">Wellness Tracker</h1>
+    <p class="page-subtitle">Log daily mood, sleep, and hydration. Demo only — fictional data only.</p>
+
+    <!-- ── Entry Form ─────────────────────────────────────────── -->
+    <section class="card" id="form-section" aria-label="Log entry form">
+      <div class="card-title">New Entry</div>
+      <p class="edit-mode-notice" id="edit-notice">✏ Editing entry — update fields and click Update Entry.</p>
+
+      <div class="field">
+        <label for="field-date">Date</label>
+        <input type="date" id="field-date" aria-describedby="err-date" />
+        <div class="field-error" id="err-date" role="alert"></div>
+      </div>
+
+      <div class="field">
+        <label for="field-mood">Mood</label>
+        <select id="field-mood" aria-describedby="err-mood">
+          <option value="">— select —</option>
+          <option value="1">1 — 😞 Poor</option>
+          <option value="2">2 — 😕 Low</option>
+          <option value="3">3 — 😐 Okay</option>
+          <option value="4">4 — 🙂 Good</option>
+          <option value="5">5 — 😄 Great</option>
+        </select>
+        <div class="field-error" id="err-mood" role="alert"></div>
+      </div>
+
+      <div class="field">
+        <label for="field-sleep">Sleep (hours)</label>
+        <input type="number" id="field-sleep" min="0" max="24" step="0.5"
+               placeholder="e.g. 7.5" aria-describedby="err-sleep hint-sleep" />
+        <div class="field-hint" id="hint-sleep">0 – 24 hrs, 0.5 increments</div>
+        <div class="field-error" id="err-sleep" role="alert"></div>
+      </div>
+
+      <div class="field">
+        <label for="field-water">Water (glasses)</label>
+        <input type="number" id="field-water" min="0" max="20" step="1"
+               placeholder="e.g. 8" aria-describedby="err-water hint-water" />
+        <div class="field-hint" id="hint-water">0 – 20 glasses</div>
+        <div class="field-error" id="err-water" role="alert"></div>
+      </div>
+
+      <!-- Save mode buttons -->
+      <div class="btn-row" id="save-controls">
+        <button class="btn btn-primary" onclick="handleSave()">Save Entry</button>
+      </div>
+
+      <!-- Edit mode buttons -->
+      <div class="btn-row" id="edit-controls">
+        <button class="btn btn-primary" onclick="handleUpdate()">Update Entry</button>
+        <button class="btn btn-secondary" onclick="exitEditMode()">Cancel</button>
+      </div>
+    </section>
+
+    <!-- ── Summary Card ───────────────────────────────────────── -->
+    <section class="card" id="summary-section" aria-label="7-entry personal demo trends">
+      <div class="card-title">Personal Demo Trends <span style="font-weight:400;text-transform:none;letter-spacing:0">(last 7 entries)</span></div>
+      <div id="summary-empty-state" class="summary-empty" hidden>No entries yet — add your first one above.</div>
+      <div class="summary-grid" id="summary-grid">
+        <div class="summary-stat">
+          <div class="stat-value" id="stat-count">—</div>
+          <div class="stat-label">Entries<br>counted</div>
+        </div>
+        <div class="summary-stat">
+          <div class="stat-value" id="avg-mood">—</div>
+          <div class="stat-label">Avg Mood<br>(1–5)</div>
+        </div>
+        <div class="summary-stat">
+          <div class="stat-value" id="avg-sleep">—</div>
+          <div class="stat-label">Avg Sleep<br>(hrs)</div>
+        </div>
+        <div class="summary-stat">
+          <div class="stat-value" id="avg-water">—</div>
+          <div class="stat-label">Avg Water<br>(glasses)</div>
+        </div>
+      </div>
+      <div class="summary-footer">
+        <span id="summary-basis"></span>
+        <span class="summary-disclaimer">Personal demo trends — not medical findings.</span>
+      </div>
+    </section>
+
+    <!-- ── Entry Log ──────────────────────────────────────────── -->
+    <section class="card" id="log-section" aria-label="Entry log">
+      <div class="log-header">
+        <div class="card-title">Entry Log</div>
+        <button class="btn btn-erase" id="btn-erase-all" onclick="eraseAll()"
+                aria-label="Erase all demo entries">Erase all demo entries</button>
+      </div>
+      <div id="log-list">
+        <div id="log-empty">No entries yet. Add your first one above.</div>
+      </div>
+    </section>
+
+  </div><!-- /page-wrap -->
+
+  <script>
+    /* ══════════════════════════════════════════════════════════════
+       DEMO ONLY — No real patient or health data should be stored.
+       All data is saved to this browser's localStorage only.
+    ══════════════════════════════════════════════════════════════ */
+
+    const STORAGE_KEY     = "wellness-tracker-demo-v1";
+    const STORAGE_KEY_OLD = "wellness_entries"; // migrated on load
+    const MOOD_LABELS = { 1:"😞 Poor", 2:"😕 Low", 3:"😐 Okay", 4:"🙂 Good", 5:"😄 Great" };
+
+    let editingId = null; // tracks which entry is being edited
+
+    /* ── Storage helpers ──────────────────────────────────────── */
+    function getEntries() {
+      try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"); }
+      catch { return []; }
+    }
+
+    function saveEntries(arr) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
+    }
+
+    /* Migrate data from old key if new key is empty */
+    function migrateOldKey() {
+      if (localStorage.getItem(STORAGE_KEY)) return; // new key already has data
+      const old = localStorage.getItem(STORAGE_KEY_OLD);
+      if (!old) return;
+      localStorage.setItem(STORAGE_KEY, old);
+      localStorage.removeItem(STORAGE_KEY_OLD);
+    }
+
+    /* ── Validation ───────────────────────────────────────────── */
+    function validate() {
+      const dateVal  = document.getElementById("field-date").value;
+      const moodVal  = document.getElementById("field-mood").value;
+      const sleepVal = document.getElementById("field-sleep").value;
+      const waterVal = document.getElementById("field-water").value;
+
+      const errors = {};
+      const today  = new Date().toISOString().slice(0, 10);
+
+      if (!dateVal) {
+        errors.date = "Date is required.";
+      } else if (dateVal < "2000-01-01") {
+        errors.date = "Date must be 2000-01-01 or later.";
+      } else if (dateVal > today) {
+        errors.date = "Date cannot be in the future.";
+      }
+
+      if (!moodVal) {
+        errors.mood = "Please select a mood rating.";
+      }
+
+      if (sleepVal === "" || sleepVal === null) {
+        errors.sleep = "Sleep hours are required.";
+      } else if (parseFloat(sleepVal) < 0 || parseFloat(sleepVal) > 24) {
+        errors.sleep = "Sleep must be between 0 and 24 hours.";
+      }
+
+      if (waterVal === "" || waterVal === null) {
+        errors.water = "Water glasses are required.";
+      } else if (parseInt(waterVal, 10) < 0 || parseInt(waterVal, 10) > 20) {
+        errors.water = "Water must be between 0 and 20 glasses.";
+      }
+
+      return errors;
+    }
+
+    function showErrors(errors) {
+      const fields = ["date", "mood", "sleep", "water"];
+      fields.forEach(f => {
+        const input = document.getElementById("field-" + f);
+        const errEl = document.getElementById("err-" + f);
+        if (errors[f]) {
+          errEl.textContent = errors[f];
+          errEl.classList.add("visible");
+          input.setAttribute("aria-invalid", "true");
+        } else {
+          errEl.textContent = "";
+          errEl.classList.remove("visible");
+          input.removeAttribute("aria-invalid");
+        }
+      });
+    }
+
+    function clearErrors() {
+      showErrors({});
+    }
+
+    /* ── Form helpers ─────────────────────────────────────────── */
+    function readForm() {
+      return {
+        date:  document.getElementById("field-date").value,
+        mood:  parseInt(document.getElementById("field-mood").value, 10),
+        sleep: parseFloat(document.getElementById("field-sleep").value),
+        water: parseInt(document.getElementById("field-water").value, 10),
+      };
+    }
+
+    function resetForm() {
+      document.getElementById("field-date").value  = todayString();
+      document.getElementById("field-mood").value  = "";
+      document.getElementById("field-sleep").value = "";
+      document.getElementById("field-water").value = "";
+      clearErrors();
+    }
+
+    function todayString() {
+      return new Date().toISOString().slice(0, 10);
+    }
+
+    /* ── CRUD operations ──────────────────────────────────────── */
+    function handleSave() {
+      const errors = validate();
+      showErrors(errors);
+      if (Object.keys(errors).length > 0) return;
+
+      const data = readForm();
+      const entries = getEntries();
+      entries.push({
+        id:    crypto.randomUUID(),
+        date:  data.date,
+        mood:  data.mood,
+        sleep: data.sleep,
+        water: data.water,
+      });
+      saveEntries(entries);
+      resetForm();
+      renderAll();
+    }
+
+    function handleUpdate() {
+      const errors = validate();
+      showErrors(errors);
+      if (Object.keys(errors).length > 0) return;
+
+      const data    = readForm();
+      const entries = getEntries().map(e => {
+        if (e.id !== editingId) return e;
+        return { ...e, date: data.date, mood: data.mood, sleep: data.sleep, water: data.water };
+      });
+      saveEntries(entries);
+      exitEditMode();
+      renderAll();
+    }
+
+    function deleteEntry(id, dateLabel) {
+      const msg = "Delete entry for " + dateLabel + "?\n\nDemo data only — this cannot be undone.";
+      if (!window.confirm(msg)) return;
+      saveEntries(getEntries().filter(e => e.id !== id));
+      if (editingId === id) exitEditMode();
+      renderAll();
+    }
+
+    function eraseAll() {
+      const count = getEntries().length;
+      if (count === 0) return;
+      const msg = "Erase all " + count + " demo entr" + (count === 1 ? "y" : "ies") + "?\n\nDemo data only — this cannot be undone.";
+      if (!window.confirm(msg)) return;
+      saveEntries([]);
+      if (editingId) exitEditMode();
+      renderAll();
+    }
+
+    function enterEditMode(id) {
+      const entry = getEntries().find(e => e.id === id);
+      if (!entry) return;
+      editingId = id;
+      document.getElementById("field-date").value  = entry.date;
+      document.getElementById("field-mood").value  = String(entry.mood);
+      document.getElementById("field-sleep").value = String(entry.sleep);
+      document.getElementById("field-water").value = String(entry.water);
+      clearErrors();
+      document.body.classList.add("edit-mode");
+      document.getElementById("form-section").scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    function exitEditMode() {
+      editingId = null;
+      document.body.classList.remove("edit-mode");
+      resetForm();
+    }
+
+    /* ── Render: summary ──────────────────────────────────────── */
+    function renderSummary() {
+      const entries   = getEntries();
+      const emptyEl   = document.getElementById("summary-empty-state");
+      const gridEl    = document.getElementById("summary-grid");
+      const footerEl  = document.querySelector(".summary-footer");
+
+      if (entries.length === 0) {
+        emptyEl.hidden  = false;
+        gridEl.hidden   = true;
+        footerEl.hidden = true;
+        document.getElementById("summary-basis").textContent = "";
+        return;
+      }
+
+      emptyEl.hidden  = true;
+      gridEl.hidden   = false;
+      footerEl.hidden = false;
+
+      // Sort newest-date first, take up to 7
+      const sorted = [...entries].sort((a, b) => b.date.localeCompare(a.date));
+      const slice  = sorted.slice(0, 7);
+      const n      = slice.length;
+
+      const avgMood  = (slice.reduce((s, e) => s + e.mood,  0) / n).toFixed(1);
+      const avgSleep = (slice.reduce((s, e) => s + e.sleep, 0) / n).toFixed(1);
+      const avgWater = (slice.reduce((s, e) => s + e.water, 0) / n).toFixed(1);
+
+      document.getElementById("stat-count").textContent = n;
+      document.getElementById("avg-mood").textContent   = avgMood;
+      document.getElementById("avg-sleep").textContent  = avgSleep;
+      document.getElementById("avg-water").textContent  = avgWater;
+      document.getElementById("summary-basis").textContent =
+        "Based on " + n + " of 7 entr" + (n === 1 ? "y" : "ies") + " — demo data only";
+    }
+
+    /* ── Render: log ──────────────────────────────────────────── */
+    function renderLog() {
+      const entries = getEntries();
+      const list    = document.getElementById("log-list");
+
+      // clear previous content safely
+      while (list.firstChild) list.removeChild(list.firstChild);
+
+      if (entries.length === 0) {
+        const empty = document.createElement("div");
+        empty.id          = "log-empty";
+        empty.textContent = "No entries yet. Add your first one above.";
+        list.appendChild(empty);
+        // hide erase button when empty
+        document.getElementById("btn-erase-all").style.display = "none";
+        return;
+      }
+
+      document.getElementById("btn-erase-all").style.display = "";
+
+      const sorted = [...entries].sort((a, b) => b.date.localeCompare(a.date) || 0);
+
+      sorted.forEach(e => {
+        const moodLabel = MOOD_LABELS[e.mood] || String(e.mood);
+
+        /* row */
+        const row = document.createElement("div");
+        row.className = "entry-row";
+        row.dataset.id = e.id;
+
+        /* date */
+        const dateSpan = document.createElement("span");
+        dateSpan.className   = "entry-date";
+        dateSpan.textContent = e.date;               // safe: ISO date string
+
+        /* chips */
+        const chips = document.createElement("span");
+        chips.className = "entry-chips";
+
+        const chipMood  = document.createElement("span");
+        chipMood.className   = "chip";
+        chipMood.title       = "Mood";
+        chipMood.textContent = moodLabel;             // safe: from lookup table
+
+        const chipSleep = document.createElement("span");
+        chipSleep.className   = "chip";
+        chipSleep.title       = "Sleep";
+        chipSleep.textContent = "💤 " + e.sleep + " hrs"; // safe: validated number
+
+        const chipWater = document.createElement("span");
+        chipWater.className   = "chip";
+        chipWater.title       = "Water";
+        chipWater.textContent = "💧 " + e.water + " glasses"; // safe: validated number
+
+        chips.appendChild(chipMood);
+        chips.appendChild(chipSleep);
+        chips.appendChild(chipWater);
+
+        /* action buttons */
+        const actions = document.createElement("span");
+        actions.className = "entry-actions";
+
+        const editBtn = document.createElement("button");
+        editBtn.className  = "btn-edit";
+        editBtn.textContent = "Edit";
+        editBtn.setAttribute("aria-label", "Edit entry for " + e.date);
+        editBtn.addEventListener("click", () => enterEditMode(e.id));
+
+        const delBtn = document.createElement("button");
+        delBtn.className  = "btn btn-danger";
+        delBtn.textContent = "Delete";
+        delBtn.setAttribute("aria-label", "Delete entry for " + e.date);
+        delBtn.addEventListener("click", () => deleteEntry(e.id, e.date));
+
+        actions.appendChild(editBtn);
+        actions.appendChild(delBtn);
+
+        row.appendChild(dateSpan);
+        row.appendChild(chips);
+        row.appendChild(actions);
+        list.appendChild(row);
+      });
+    }
+
+    /* ── Render: all ──────────────────────────────────────────── */
+    function renderAll() {
+      renderSummary();
+      renderLog();
+    }
+
+    /* ── Seed three synthetic demo entries ────────────────────── */
+    function seedDemoData() {
+      if (getEntries().length > 0) return; // only seed on first load
+      const demo = [
+        { id: crypto.randomUUID(), date: "2025-07-14", mood: 3, sleep: 6.5, water: 5 },
+        { id: crypto.randomUUID(), date: "2025-07-15", mood: 4, sleep: 7.0, water: 8 },
+        { id: crypto.randomUUID(), date: "2025-07-16", mood: 2, sleep: 5.0, water: 4 },
+      ];
+      saveEntries(demo);
+    }
+
+    /* ── Init ─────────────────────────────────────────────────── */
+    document.getElementById("field-date").value = todayString();
+    document.getElementById("field-date").max   = todayString();
+    migrateOldKey();
+    seedDemoData();
+    renderAll();
+  </script>
+</body>
+</html>
